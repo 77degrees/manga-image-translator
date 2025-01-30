@@ -8,6 +8,7 @@ import torch
 import logging
 import numpy as np
 from PIL import Image
+from PIL import ImageEnhance
 from typing import Optional, Any
 
 from .config import Config, Colorizer, Detector, Translator, Renderer, Inpainter
@@ -302,8 +303,26 @@ class MangaTranslator:
         return ctx
 
     async def _run_colorizer(self, config: Config, ctx: Context):
-        #todo: im pretty sure the ctx is never used. does it need to be passed in?
         return await dispatch_colorization(config.colorizer.colorizer, device=self.device, image=ctx.input, **ctx)
+
+    async def _run_colorizer(self, config: Config, ctx: Context):
+    # Apply colorization
+    image = await dispatch_colorization(config.colorizer.colorizer, device=self.device, image=ctx.input, **ctx)
+
+    # Apply additional enhancements
+    if config.colorizer.contrast_enhance != 1.0:
+        enhancer = ImageEnhance.Contrast(image)
+        image = enhancer.enhance(config.colorizer.contrast_enhance)
+
+    if config.colorizer.saturation_enhance != 1.0:
+        enhancer = ImageEnhance.Color(image)
+        image = enhancer.enhance(config.colorizer.saturation_enhance)
+
+    if config.colorizer.sharpness != 1.0:
+        enhancer = ImageEnhance.Sharpness(image)
+        image = enhancer.enhance(config.colorizer.sharpness)
+
+    return image
 
     async def _run_upscaling(self, config: Config, ctx: Context):
         return (await dispatch_upscaling(config.upscale.upscaler, [ctx.img_colorized], config.upscale.upscale_ratio, self.device))[0]
