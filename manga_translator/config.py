@@ -9,6 +9,12 @@ from pydantic import BaseModel
 
 
 # TODO: Refactor
+class Config:
+    ...
+    contrast_enhance: float = 1.0
+    saturation_enhance: float = 1.0
+    sharpness: float = 1.0
+
 class TranslatorChain:
     def __init__(self, string: str):
         """
